@@ -42,10 +42,21 @@ def populate_user(user, authentication_response):
             user.save()
             user_profile = UserProfile(user=user)
             
-        # There should be more variables, but let's settle on the actual model first.
-        if attr.find(CAS + 'fullName', NSMAP) is not None:
-            user_profile.name = attr.find(CAS + 'fullName', NSMAP).text
-    
+        # Since this branch is for old edX, we need to assemble the full name from three components as well as
+        # save them, because it wants the full name in inobvious order (last-first-patronymic).
+
+        if attr.find(CAS + 'givenName', NSMAP) is not None:
+            user_profile.firstname = attr.find(CAS + 'givenName', NSMAP).text[0:30]
+
+        if attr.find(CAS + 'sn', NSMAP) is not None:
+            user_profile.lastname = attr.find(CAS + 'sn', NSMAP).text[0:30]
+
+        if attr.find(CAS + 'patronymic', NSMAP) is not None:
+            user_profile.middlename = attr.find(CAS + 'patronymic', NSMAP).text[0:30]
+
+        # Now that we presumably have all three components, we can assemble them.
+        user_profile.name = u' '.join([user_profile.lastname,user_profile.firstname,user_profile.middlename])
+
         # Profile is always getting saved, just like the user,
         # but the user is getting saved by django_cas.
         user_profile.save()
