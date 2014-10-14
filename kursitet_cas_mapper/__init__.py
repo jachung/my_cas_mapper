@@ -21,7 +21,7 @@ def populate_user(user, authentication_response):
         if superuser_flag is not None:
             user.is_superuser = (superuser_flag.text or '').upper() == 'TRUE'
 
-        active_flag = attr.find(CAS.text + 'is_active', NSMAP)
+        active_flag = attr.find(CAS + 'is_active', NSMAP)
         if active_flag is not None:
             user.is_active = (active_flag.text or '').upper() == 'TRUE'
 
