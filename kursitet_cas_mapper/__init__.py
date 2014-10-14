@@ -49,9 +49,10 @@ def populate_user(user, authentication_response):
         from student.models import UserProfile
         
         # If the user doesn't yet have a profile, it means it's a new one and we need to create it a profile.
+        # but we need to save the user first.
+        user.save()
+        
         if not UserProfile.objects.filter(user=user):
-            # but we need to save the user first.
-            user.save()
             user_profile = UserProfile(user=user, name=user.username)
         else:
             user_profile = UserProfile.objects.get(user=user)
