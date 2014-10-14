@@ -10,30 +10,36 @@ NSMAP = {'cas': CAS_URI}
 CAS = '{%s}' % CAS_URI
 
 def populate_user(user, authentication_response):
+    attr = authentication_response.find(CAS + 'authenticationSuccess/'  + CAS + 'attributes'  , namespaces=NSMAP)
+    if attr is not None:
+    
+        staff_flag = attr.find(CAS + 'is_staff', NSMAP)
+        if staff_flag is not None:
+            user.is_staff = (staff_flag.text or '').upper() == 'TRUE'
 
-    if authentication_response.find(CAS + 'authenticationSuccess/'  + CAS + 'attributes'  , namespaces=NSMAP) is not None:
-        attr = authentication_response.find(CAS + 'authenticationSuccess/'  + CAS + 'attributes'  , namespaces=NSMAP)
+        superuser_flag = attr.find(CAS + 'is_superuser', NSMAP)    
+        if superuser_flag is not None:
+            user.is_superuser = (superuser_flag.text or '').upper() == 'TRUE'
 
-        if attr.find(CAS + 'is_staff', NSMAP) is not None:
-            user.is_staff = attr.find(CAS + 'is_staff', NSMAP).text.upper() == 'TRUE'
-
-        if attr.find(CAS + 'is_superuser', NSMAP) is not None:
-            user.is_superuser = attr.find(CAS + 'is_superuser', NSMAP).text.upper() == 'TRUE'
-
-        if attr.find(CAS + 'is_active', NSMAP) is not None:
-            user.is_active = attr.find(CAS + 'is_active', NSMAP).text.upper() == 'TRUE'
+        active_flag = attr.find(CAS.text + 'is_active', NSMAP)
+        if active_flag is not None:
+            user.is_active = (active_flag.text or '').upper() == 'TRUE'
 
         # Limiting by maximum lengths.
         # Max length of firstname/lastname is 30.
         # Max length of a email is 75.
-        if attr.find(CAS + 'givenName', NSMAP) is not None:
-            user.first_name = attr.find(CAS + 'givenName', NSMAP).text[0:30]
+        
+        first_name = attr.find(CAS + 'givenName', NSMAP)
+        if first_name is not None:
+            user.first_name = (first_name.text or '')[0:30]
 
-        if attr.find(CAS + 'sn', NSMAP) is not None:
-            user.last_name = attr.find(CAS + 'sn', NSMAP).text[0:30]
+        last_name = attr.find(CAS + 'sn', NSMAP)
+        if last_name is not None:
+            user.last_name = (last_name.text or '')[0:30]
 
-        if attr.find(CAS + 'email', NSMAP) is not None:
-            user.email = attr.find(CAS + 'email', NSMAP).text[0:75]
+        email = attr.find(CAS + 'email', NSMAP)
+        if email is not None:
+            user.email = (email.text or '')[0:75]
         
         # Here we handle things that go into UserProfile instead.
         
@@ -42,23 +48,17 @@ def populate_user(user, authentication_response):
         
         from student.models import UserProfile
         
-        try:
-            user_profile = UserProfile.objects.get(user=user)
-        except UserProfile.DoesNotExist:
-            user.save()
-            user_profile = UserProfile(user=user)
+        user_profile, created = UserProfile.objects.get_or_create(user=user)
             
         # Since this branch is for old edX, we need to assemble the full name from three components as well as
         # save them, because it wants the full name in inobvious order (last-first-patronymic).
 
-        if attr.find(CAS + 'givenName', NSMAP) is not None:
-            user_profile.firstname = attr.find(CAS + 'givenName', NSMAP).text[0:30]
+        user_profile.firstname = (first_name.text or '')[0:30]
+        user_profile.lastname = (last_name.text or '')[0:30]
 
-        if attr.find(CAS + 'sn', NSMAP) is not None:
-            user_profile.lastname = attr.find(CAS + 'sn', NSMAP).text[0:30]
-
-        if attr.find(CAS + 'patronymic', NSMAP) is not None:
-            user_profile.middlename = attr.find(CAS + 'patronymic', NSMAP).text[0:30]
+        patronymic = attr.find(CAS + 'patronymic', NSMAP)
+        if patronymic is not None:
+            user_profile.middlename = (patronymic.text or '')[0:30]
 
         # Now that we presumably have all three components, we can assemble them.
         user_profile.name = u' '.join([user_profile.lastname,user_profile.firstname,user_profile.middlename])
@@ -70,7 +70,7 @@ def populate_user(user, authentication_response):
         # Now the really fun bit. Signing the user up for courses given.
         
         coursetag = attr.find(CAS + 'courses', NSMAP)
-        if coursetag is not None:
+        if coursetag is not None and coursetag.text is not None:
             try:
                 courses = json.loads(coursetag.text)
                 assert isinstance(courses,list)
