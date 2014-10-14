@@ -48,8 +48,14 @@ def populate_user(user, authentication_response):
         
         from student.models import UserProfile
         
-        user_profile, created = UserProfile.objects.get_or_create(user=user)
-            
+        # If the user doesn't yet have a profile, it means it's a new one and we need to create it a profile.
+        if not UserProfile.objects.filter(user=user):
+            # but we need to save the user first.
+            user.save()
+            user_profile = UserProfile(user=user, name=user.username)
+        else:
+            user_profile = UserProfile.objects.get(user=user)
+
         # Since this branch is for old edX, we need to assemble the full name from three components as well as
         # save them, because it wants the full name in inobvious order (last-first-patronymic).
 
@@ -65,9 +71,6 @@ def populate_user(user, authentication_response):
 
         # Profile is always getting saved, just like the user,
         # but the user is getting saved by django_cas.
-        if created:
-            # If we had to create a profile, we probably had to create a user as well, so just in case save that.
-            user.save()
         user_profile.save()
         
         # Now the really fun bit. Signing the user up for courses given.
