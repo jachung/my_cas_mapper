@@ -65,6 +65,9 @@ def populate_user(user, authentication_response):
 
         # Profile is always getting saved, just like the user,
         # but the user is getting saved by django_cas.
+        if created:
+            # If we had to create a profile, we probably had to create a user as well, so just in case save that.
+            user.save()
         user_profile.save()
         
         # Now the really fun bit. Signing the user up for courses given.
