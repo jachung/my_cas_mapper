@@ -19,11 +19,11 @@ EXCLUDE_FROM_PACKAGES = []
 version = "0.0.1"
 
 setup(
-    name='kursitet_cas_mapper',
+    name='my_cas_mapper',
     version=version,
-    url='http://kursitet.ru',
+    url='http://www.mobicloud.asu.edu',
     author='Derived from mitx_cas_mapper by MITx',
-    author_email='rn3aoh.g@gmail.com',
+    author_email='jachung2@gmail.com',
     description=('CAS attribute mapper'),
     license='Proprietary',
     packages=find_packages(exclude=EXCLUDE_FROM_PACKAGES),
