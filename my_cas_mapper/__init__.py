@@ -2,7 +2,7 @@
 Beyond the original function of CAS attribute mapper, this should also manage other objects...
 """
 
-CAS_URI = 'http://www.yale.edu/tp/cas'
+CAS_URI = 'https://cas.mobicloud.asu.edu:8443'
 
 NSMAP = {'cas': CAS_URI}
 CAS = '{%s}' % CAS_URI
